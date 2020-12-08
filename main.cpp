@@ -83,35 +83,35 @@ struct InputData {
 };
 
 
-// ½Ç½Ã°£À¸·Î MIC·Î µé¾î¿Â ÀÔ·ÂÀ» ¹öÆÛ¿¡ ÀúÀåÇÏ°í ÀúÀåÇÑ µ¥ÀÌÅÍ¸¦ processing¿¡¼­ Ã³¸®ÇÑ ÈÄ ½Ç½Ã°£À¸·Î Ãâ·ÂÇÑ´Ù.
+// ì‹¤ì‹œê°„ìœ¼ë¡œ MICë¡œ ë“¤ì–´ì˜¨ ì…ë ¥ì„ ë²„í¼ì— ì €ì¥í•˜ê³  ì €ì¥í•œ ë°ì´í„°ë¥¼ processingì—ì„œ ì²˜ë¦¬í•œ í›„ ì‹¤ì‹œê°„ìœ¼ë¡œ ì¶œë ¥í•œë‹¤.
 int inout(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames,
 	double /*streamTime*/, RtAudioStreamStatus status, void* data)
 {
 	InputData* iData = (InputData*)data;
 
-	////½Ç½Ã°£À¸·Î ÀÔ·ÂÀ» ¹Ş´Â ºÎºĞ
+	////ì‹¤ì‹œê°„ìœ¼ë¡œ ì…ë ¥ì„ ë°›ëŠ” ë¶€ë¶„
 	unsigned int frames = nBufferFrames;
-	//ÃÖ´ë ¹öÆÛ»çÀÌÁî¸¦ ³ÑÀ» °æ¿ì Å©±â¸¦ ³Ñ´Â µ¥ÀÌÅÍ´Â ÀúÀåÇÏÁö ¾Ê´Â´Ù.
+	//ìµœëŒ€ ë²„í¼ì‚¬ì´ì¦ˆë¥¼ ë„˜ì„ ê²½ìš° í¬ê¸°ë¥¼ ë„˜ëŠ” ë°ì´í„°ëŠ” ì €ì¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
 	if (iData->iframeCounter + nBufferFrames > iData->totalFrames)
 	{
 		frames = iData->totalFrames - iData->iframeCounter;
 		iData->bufferBytes = frames * iData->channels * sizeof(MY_TYPE);
 	}
 	unsigned long in_offset = iData->iframeCounter * iData->channels;
-	//ÀúÀåµÈ ¹öÆÛ°¡ Á¸ÀçÇÏ¸é ÀÌ¸¦ processÇÏ±â À§ÇØ º¹»çÇÏ¸ç Ã³¸®ÇÒ µ¥ÀÌÅÍ°¡ Á¸ÀçÇÑ´Ù°í record_numÀ¸·Î È®ÀÎÇÑ´Ù.
+	//ì €ì¥ëœ ë²„í¼ê°€ ì¡´ì¬í•˜ë©´ ì´ë¥¼ processí•˜ê¸° ìœ„í•´ ë³µì‚¬í•˜ë©° ì²˜ë¦¬í•  ë°ì´í„°ê°€ ì¡´ì¬í•œë‹¤ê³  record_numìœ¼ë¡œ í™•ì¸í•œë‹¤.
 	memcpy(iData->in_buffer + in_offset, inputBuffer, iData->bufferBytes);
 	iData->iframeCounter += frames;
 	record_num.fetch_add(1);
 
-	//ÀúÀåµÈ µ¥ÀÌÅÍ°¡ ÃÖ´ë ¹öÆÛ»çÀÌÁî¸¦ ³Ñ±â¸é ´Ù½Ã offsetÀ» 0À¸·Î ÇÏ¿© overwritingÇÑ´Ù.
-	//ÀÌ¹Ì ¾ÕÀÇ µ¥ÀÌÅÍ´Â process¸¦ À§ÇØ º¹»çµÇ¾ú´Ù.
+	//ì €ì¥ëœ ë°ì´í„°ê°€ ìµœëŒ€ ë²„í¼ì‚¬ì´ì¦ˆë¥¼ ë„˜ê¸°ë©´ ë‹¤ì‹œ offsetì„ 0ìœ¼ë¡œ í•˜ì—¬ overwritingí•œë‹¤.
+	//ì´ë¯¸ ì•ì˜ ë°ì´í„°ëŠ” processë¥¼ ìœ„í•´ ë³µì‚¬ë˜ì—ˆë‹¤.
 	if (iData->iframeCounter >= iData->totalFrames)
 	{
-		//return 2; //ÇöÀç ½Ã°£(32ÃÊ)ÀÌ ´Ù µÇ¸é ÇÁ·Î±×·¥À» ¸ØÃßµµ·Ï µ¥¸ğÇÏ¿´´Ù.
+		//return 2; //í˜„ì¬ ì‹œê°„(32ì´ˆ)ì´ ë‹¤ ë˜ë©´ í”„ë¡œê·¸ë¨ì„ ë©ˆì¶”ë„ë¡ ë°ëª¨í•˜ì˜€ë‹¤.
 		iData->iframeCounter = 0;
 	}
 
-	//process¿¡¼­ Ã³¸®µÈ µ¥ÀÌÅÍ°¡ ½Ç½Ã°£ Ãâ·ÂÀ» À§ÇØ Ã³¸® ÈÄ ¹ß»ıÇÏ´Â copyend¶ó´Â ½ÅÈ£°¡ ¶ß¸é callbackÇÔ¼öÀÇ outputÀ¸·Î º¹»çÇÑ´Ù.
+	//processì—ì„œ ì²˜ë¦¬ëœ ë°ì´í„°ê°€ ì‹¤ì‹œê°„ ì¶œë ¥ì„ ìœ„í•´ ì²˜ë¦¬ í›„ ë°œìƒí•˜ëŠ” copyendë¼ëŠ” ì‹ í˜¸ê°€ ëœ¨ë©´ callbackí•¨ìˆ˜ì˜ outputìœ¼ë¡œ ë³µì‚¬í•œë‹¤.
 	if (copyend.load())
 	{
 		if (iData->oframeCounter + nBufferFrames > iData->totalFrames)
@@ -122,14 +122,14 @@ int inout(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames,
 		unsigned long out_offset = iData->oframeCounter * iData->channels;
 		memcpy(outputBuffer, iData->out_buffer + out_offset, iData->bufferBytes);
 		iData->oframeCounter += frames;
-		//Ã³¸®µÈ µ¥ÀÌÅÍ°¡ Ãâ·ÂµÇ¸é copyend°ªÀ» ÁÙÀÎ´Ù.
+		//ì²˜ë¦¬ëœ ë°ì´í„°ê°€ ì¶œë ¥ë˜ë©´ copyendê°’ì„ ì¤„ì¸ë‹¤.
 		copyend.fetch_sub(1);
 		if (iData->oframeCounter >= iData->totalFrames)
 		{
 			iData->oframeCounter = 0;
 		}
 	}
-	//Ã³¸®µÈ µ¥ÀÌÅÍ°¡ ¾øÀ¸¸é (¹ßÈ­±¸°£ÀÌ ¾ø´Â°æ¿ì) 0À» Ãâ·ÂÇÑ´Ù.
+	//ì²˜ë¦¬ëœ ë°ì´í„°ê°€ ì—†ìœ¼ë©´ (ë°œí™”êµ¬ê°„ì´ ì—†ëŠ”ê²½ìš°) 0ì„ ì¶œë ¥í•œë‹¤.
 	else if (copyend.load() == 0)
 	{
 		memcpy(outputBuffer, iData->z_buffer, iData->bufferBytes);
@@ -212,7 +212,7 @@ int main(void)
 		int j;
 		int proc_end = 0;
 		int proc_count = 0;
-		unsigned int ch, i, channels, fs, oDevice = 0, iDevice = 0, iOffset = 0, oOffset = 0;
+		unsigned int ch, i, channels, fs, oDevice = 0, iDevice = 0, iOffset = 0, oOffset = 4;
 
 		double** input, ** proc_output;
 
@@ -263,7 +263,7 @@ int main(void)
 		data.out_buffer = 0;
 		data.z_buffer = 0;
 
-		//À§ÀÇ inoutÀÌ¶ó´Â callbackÇÔ¼ö¸¦ ½ºÆ®¸®¹Ö ÇÏ±â À§ÇØ ¿©·¯ argument¸¦ ÀÔ·ÂÇÏ°í openÇÑ´Ù.
+		//ìœ„ì˜ inoutì´ë¼ëŠ” callbackí•¨ìˆ˜ë¥¼ ìŠ¤íŠ¸ë¦¬ë° í•˜ê¸° ìœ„í•´ ì—¬ëŸ¬ argumentë¥¼ ì…ë ¥í•˜ê³  opení•œë‹¤.
 		try {
 			adac.openStream(&oParams, &iParams, FORMAT, fs, &bufferFrames, &inout, (void*)&data, &options);
 		}
@@ -294,7 +294,7 @@ int main(void)
 			goto cleanup;
 		}
 
-		//ÁØºñµÈ callbackÇÔ¼ö¸¦ streaming ½ÃÀÛÇÑ´Ù.
+		//ì¤€ë¹„ëœ callbackí•¨ìˆ˜ë¥¼ streaming ì‹œì‘í•œë‹¤.
 		try {
 			adac.startStream();
 
@@ -304,7 +304,7 @@ int main(void)
 			goto cleanup;
 		}
 
-		//streamingÀÌ µ¹¸é¼­ ¾ÕÀÇ callback(inout)ÇÔ¼ö¿¡¼­ 
+		//streamingì´ ëŒë©´ì„œ ì•ì˜ callback(inout)í•¨ìˆ˜ì—ì„œ 
 		while (adac.isStreamRunning())
 		{
 			if (record_num.load())
@@ -314,7 +314,7 @@ int main(void)
 				{
 					for (i = 0; i < bufferFrames; i++)
 					{
-						input[ch][i] = (data.in_buffer[channels * i + ch + in_buffer_cnt]) / 32768.0; //inputÀÚ·áÇü¿¡ ¸Â°Ô º¯È¯ÇÏ¿© ÀúÀå
+						input[ch][i] = (data.in_buffer[channels * i + ch + in_buffer_cnt]) / 32768.0; //inputìë£Œí˜•ì— ë§ê²Œ ë³€í™˜í•˜ì—¬ ì €ì¥
 					}
 				}
 
@@ -334,19 +334,19 @@ int main(void)
 
 				in_buffer_cnt += bufferFrames * channels;
 				proc_count++;
-				//Process¿¡¼­ ¹ßÈ­±¸°£¿¡¼­´Â proc_end¿¡ 1À» returnÇÑ´Ù. ¹ßÈ­±¸°£ÀÌ ¾Æ´Ï¸é 0À» returnÇÑ´Ù.
+				//Processì—ì„œ ë°œí™”êµ¬ê°„ì—ì„œëŠ” proc_endì— 1ì„ returní•œë‹¤. ë°œí™”êµ¬ê°„ì´ ì•„ë‹ˆë©´ 0ì„ returní•œë‹¤.
 				proc_end = proc->Process(input, proc_count, proc_output);
 
-				//¹ßÈ­±¸°£¿¡¼­ Ã³¸®µÈ µ¥ÀÌÅÍ¿¡ ´ëÇØ Ãâ·ÂsdÀ» À§ÇØ callbackÇÔ¼öÀÇ outbuffer¿¡ ³Ö¾îÁØ´Ù.
+				//ë°œí™”êµ¬ê°„ì—ì„œ ì²˜ë¦¬ëœ ë°ì´í„°ì— ëŒ€í•´ ì¶œë ¥sdì„ ìœ„í•´ callbackí•¨ìˆ˜ì˜ outbufferì— ë„£ì–´ì¤€ë‹¤.
 				if (proc_end == 1)
 				{
 					for (ch = 0; ch < channels; ch++)
 					{
 						for (i = 0; i < bufferFrames; i++)
 						{
-							data.out_buffer[channels * (3 * i) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputÀÚ·áÇü¿¡ ¸Â°Ô º¯È¯ÇÏ¿© ÀúÀå
-							data.out_buffer[channels * (3 * i + 1) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputÀÚ·áÇü¿¡ ¸Â°Ô º¯È¯ÇÏ¿© ÀúÀå
-							data.out_buffer[channels * (3 * i + 2) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputÀÚ·áÇü¿¡ ¸Â°Ô º¯È¯ÇÏ¿© ÀúÀå
+							data.out_buffer[channels * (3 * i) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputìë£Œí˜•ì— ë§ê²Œ ë³€í™˜í•˜ì—¬ ì €ì¥
+							data.out_buffer[channels * (3 * i + 1) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputìë£Œí˜•ì— ë§ê²Œ ë³€í™˜í•˜ì—¬ ì €ì¥
+							data.out_buffer[channels * (3 * i + 2) + ch + out_buffer_cnt] = (MY_TYPE)(proc_output[0][i] * 32768.0); //inputìë£Œí˜•ì— ë§ê²Œ ë³€í™˜í•˜ì—¬ ì €ì¥
 						}
 					}
 					out_buffer_cnt += 3 * bufferFrames * channels;
